@@ -177,7 +177,7 @@ impl<E: Spawner + Clock + ReasonablyRealtime + Rng + CryptoRng + RNetwork + Metr
         let mut dialer_task = dialer.start(self.tracker_mailbox, spawner_mailbox);
 
         // Wait for first actor to exit
-        info!("network started");
+        info!("network started [DEBUG BUILD WITH PEER RELEASE LOGGING]");
         let err = select! {
             tracker = &mut tracker_task => {
                 debug!("tracker exited");

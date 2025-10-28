@@ -12,6 +12,7 @@ use futures::{
     channel::{mpsc, oneshot},
     SinkExt,
 };
+use tracing::{debug, warn};
 
 /// Messages that can be sent to the tracker actor.
 pub enum Message<E: Spawner + Metrics, C: PublicKey> {
@@ -215,13 +216,16 @@ impl<E: Spawner + Metrics, C: PublicKey> Releaser<E, C> {
     ///
     /// Returns `true` if the reservation was released, `false` if the mailbox is full.
     pub fn try_release(&mut self, metadata: Metadata<C>) -> bool {
+        let peer = metadata.public_key();
         let Err(e) = self.sender.try_send(Message::Release { metadata }) else {
+            debug!(?peer, "releaser: try_release succeeded");
             return true;
         };
         assert!(
             e.is_full(),
             "Unexpected error trying to release reservation {e:?}"
         );
+        warn!(?peer, "releaser: try_release failed - mailbox full, spawning async release");
         false
     }
 
@@ -229,10 +233,13 @@ impl<E: Spawner + Metrics, C: PublicKey> Releaser<E, C> {
     ///
     /// This method will block if the mailbox is full.
     pub async fn release(&mut self, metadata: Metadata<C>) {
+        let peer = metadata.public_key();
+        debug!(?peer, "releaser: async release starting");
         self.sender
             .send(Message::Release { metadata })
             .await
             .unwrap();
+        debug!(?peer, "releaser: async release completed");
     }
 }
 
