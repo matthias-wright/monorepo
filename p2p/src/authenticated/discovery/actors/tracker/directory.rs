@@ -105,9 +105,12 @@ impl<E: Spawner + Rng + Clock + GClock + RuntimeMetrics, C: PublicKey> Directory
     pub fn release(&mut self, metadata: Metadata<C>) {
         let peer = metadata.public_key();
         let Some(record) = self.peers.get_mut(peer) else {
+            debug!(?peer, "release: peer not found in directory");
             return;
         };
+        let old_status = record.status();
         record.release();
+        debug!(?peer, ?old_status, new_status = ?record.status(), "directory released peer");
         self.metrics.reserved.dec();
 
         // If the reservation was taken by the dialer, record the failure.
@@ -312,7 +315,15 @@ impl<E: Spawner + Rng + Clock + GClock + RuntimeMetrics, C: PublicKey> Directory
 
     /// Returns true if the peer is listenable.
     pub fn listenable(&self, peer: &C) -> bool {
-        self.peers.get(peer).is_some_and(|r| r.listenable())
+        let result = self.peers.get(peer).is_some_and(|r| r.listenable());
+        if !result {
+            if let Some(record) = self.peers.get(peer) {
+                debug!(?peer, status = ?record.status(), "peer not listenable - status check failed");
+            } else {
+                debug!(?peer, "peer not listenable - not in peers map");
+            }
+        }
+        result
     }
 
     // --------- Helpers ----------

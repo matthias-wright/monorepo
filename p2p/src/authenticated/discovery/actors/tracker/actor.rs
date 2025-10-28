@@ -255,6 +255,7 @@ impl<E: Spawner + Rng + Clock + GClock + RuntimeMetrics, C: Signer> Actor<E, C> 
                 }
                 Message::Release { metadata } => {
                     // Release the peer
+                    debug!(?metadata, "tracker releasing peer");
                     self.directory.release(metadata);
                 }
             }

@@ -92,6 +92,13 @@ impl<C: PublicKey> Record<C> {
         }
     }
 
+    // ---------- Getters ----------
+
+    /// Returns the current status of the peer.
+    pub fn status(&self) -> Status {
+        self.status
+    }
+
     // ---------- Setters ----------
 
     /// Attempt to update the [PeerInfo] of a discovered peer.
