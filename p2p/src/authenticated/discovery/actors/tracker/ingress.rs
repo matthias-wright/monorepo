@@ -216,7 +216,7 @@ impl<E: Spawner + Metrics, C: PublicKey> Releaser<E, C> {
     ///
     /// Returns `true` if the reservation was released, `false` if the mailbox is full.
     pub fn try_release(&mut self, metadata: Metadata<C>) -> bool {
-        let peer = metadata.public_key();
+        let peer = metadata.public_key().clone();
         let Err(e) = self.sender.try_send(Message::Release { metadata }) else {
             debug!(?peer, "releaser: try_release succeeded");
             return true;
@@ -233,7 +233,7 @@ impl<E: Spawner + Metrics, C: PublicKey> Releaser<E, C> {
     ///
     /// This method will block if the mailbox is full.
     pub async fn release(&mut self, metadata: Metadata<C>) {
-        let peer = metadata.public_key();
+        let peer = metadata.public_key().clone();
         debug!(?peer, "releaser: async release starting");
         self.sender
             .send(Message::Release { metadata })
