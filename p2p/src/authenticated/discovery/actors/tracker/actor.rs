@@ -163,6 +163,7 @@ impl<E: Spawner + Rng + Clock + GClock + RuntimeMetrics, C: Signer> Actor<E, C> 
                     let max = self.max_peer_set_size;
                     assert!(len <= max, "peer set too large: {len} > {max}");
 
+                    debug!(index, peer_count = peers.len(), "tracker: registering peer set");
                     self.directory.add_set(index, peers);
                 }
                 Message::Connect {
@@ -200,7 +201,8 @@ impl<E: Spawner + Rng + Clock + GClock + RuntimeMetrics, C: Signer> Actor<E, C> 
                     };
                 }
                 Message::BitVec { bit_vec, mut peer } => {
-                    let Some(mut infos) = self.directory.infos(bit_vec) else {
+                    let Some(mut infos) = self.directory.infos(bit_vec.clone()) else {
+                        debug!(index = bit_vec.index, "tracker: received BitVec for unknown peer set, killing peer");
                         peer.kill().await;
                         continue;
                     };
